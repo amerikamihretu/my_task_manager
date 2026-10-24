@@ -19,7 +19,7 @@ A full-stack task management application with secure user authentication, protec
 - **Frontend:** React, React Router, Vite, Tailwind CSS
 - **Backend:** Node.js, Express, MongoDB, Mongoose
 - **Authentication:** JWT in an HTTP-only cookie, bcrypt
-- **File uploads:** Multer with locally served avatar files
+- **File uploads:** Multer with Cloudinary-managed avatar storage
 - **Testing:** Node test runner, Supertest, MongoDB Memory Server
 
 ## Project structure
@@ -93,6 +93,21 @@ The available variables and safe placeholder values are documented in:
 Never put database credentials, JWT secrets, or private keys in variables
 starting with `VITE_`, because Vite bundles them into browser code.
 
+## Deployment
+
+The application is deployed using separate managed services:
+
+- **MongoDB Atlas:** hosts the MongoDB database
+- **Cloudinary:** stores uploaded avatar images
+- **Render:** hosts the Node.js and Express backend
+- **Vercel:** hosts the React/Vite frontend
+
+The deployed frontend communicates with the deployed backend through
+`VITE_API_BASE_URL`. The backend connects to MongoDB Atlas through `MONGO_URI`
+and uploads avatars to Cloudinary through the private `CLOUDINARY_URL`.
+Production secrets are configured in the hosting providers' environment
+settings and are never committed to Git.
+
 ## Avatar storage
 
 Avatars are uploaded to Cloudinary. Set the private `CLOUDINARY_URL` in the
@@ -130,7 +145,7 @@ npm run build
 - The current JWT and authentication-cookie lifetime is seven days. For a higher-security deployment, use a shorter access-token lifetime with a refresh-token flow.
 - Set `NODE_ENV=production`, use HTTPS, and configure `CLIENT_ORIGIN` to the deployed frontend URL in production.
 - Do not log passwords, JWTs, cookies, database connection strings, or full request bodies. Startup and database connection logs are safe when they contain only operational information.
-- Keep `server/uploads/` outside Git and use persistent object storage for production avatars.
+- Keep local upload directories outside Git; production avatars are stored in Cloudinary.
 
 ## Production checklist
 
