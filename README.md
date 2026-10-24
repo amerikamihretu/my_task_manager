@@ -95,10 +95,10 @@ starting with `VITE_`, because Vite bundles them into browser code.
 
 ## Avatar storage
 
-Avatars are uploaded to Cloudinary. Set `CLOUDINARY_CLOUD_NAME`,
-`CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in the server environment.
-The database stores the Cloudinary URL and public ID, while the image itself
-remains in persistent managed storage.
+Avatars are uploaded to Cloudinary. Set the private `CLOUDINARY_URL` in the
+server environment using the `cloudinary://API_KEY:API_SECRET@CLOUD_NAME`
+format. The database stores the Cloudinary URL and public ID, while the image
+itself remains in persistent managed storage.
 
 ## Testing and quality checks
 
