@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import path from "node:path";
 
 import authRoutes from "./routes/authRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
@@ -27,7 +26,6 @@ app.use(
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 app.use(verifyOrigin);
-app.use("/uploads", express.static(path.resolve("uploads")));
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);

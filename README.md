@@ -95,12 +95,10 @@ starting with `VITE_`, because Vite bundles them into browser code.
 
 ## Avatar storage
 
-Avatar files are saved in `server/uploads/avatars` during local development.
-The directory is ignored by Git and is created automatically when the server
-starts. In production, local disk may be temporary or unavailable across
-deployments and multiple server instances. Use persistent object storage such
-as Amazon S3, Cloudinary, or another managed file service before deploying
-avatars to a production environment.
+Avatars are uploaded to Cloudinary. Set `CLOUDINARY_CLOUD_NAME`,
+`CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in the server environment.
+The database stores the Cloudinary URL and public ID, while the image itself
+remains in persistent managed storage.
 
 ## Testing and quality checks
 

@@ -125,11 +125,10 @@ test("user can upload and remove an avatar", async () => {
     });
 
   assert.equal(upload.status, 200);
-  assert.match(upload.body.data.user.avatar, /^\/uploads\/avatars\//);
-
-  const avatar = await request(app).get(upload.body.data.user.avatar);
-  assert.equal(avatar.status, 200);
-  assert.equal(avatar.headers["cross-origin-resource-policy"], "cross-origin");
+  assert.match(
+    upload.body.data.user.avatar,
+    /^https:\/\/res\.cloudinary\.com\/test\//,
+  );
 
   const remove = await request(app)
     .delete("/api/auth/profile/avatar")

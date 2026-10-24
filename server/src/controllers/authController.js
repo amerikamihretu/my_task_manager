@@ -1,15 +1,17 @@
 import bcrypt from "bcrypt";
-import fs from "node:fs/promises";
-import path from "node:path";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
+import {
+  deleteAvatarFromCloudinary,
+  uploadAvatarToCloudinary,
+} from "../config/cloudinary.js";
 
 const SALT_ROUNDS = 10;
 
 function cookieOptions() {
   return {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE_MS),
@@ -96,7 +98,7 @@ export async function login(req, res, next) {
 export async function logout(_req, res) {
   res.clearCookie("token", {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
   });
@@ -118,9 +120,15 @@ export async function me(req, res) {
 }
 
 export async function updateProfile(req, res, next) {
+  let uploadedAvatar = null;
+
   try {
     const updates = { name: req.body.name };
-    if (req.file) updates.avatar = `/uploads/avatars/${req.file.filename}`;
+    if (req.file) {
+      uploadedAvatar = await uploadAvatarToCloudinary(req.file.buffer);
+      updates.avatar = uploadedAvatar.url;
+      updates.avatarPublicId = uploadedAvatar.publicId;
+    }
 
     const currentUser = await User.findById(req.user._id);
     const user = await User.findByIdAndUpdate(
@@ -129,8 +137,8 @@ export async function updateProfile(req, res, next) {
       { new: true, runValidators: true },
     );
 
-    if (req.file && currentUser?.avatar) {
-      await removeAvatarFile(currentUser.avatar);
+    if (uploadedAvatar && currentUser?.avatarPublicId) {
+      await deleteAvatarFromCloudinary(currentUser.avatarPublicId);
     }
 
     res.status(200).json({
@@ -138,7 +146,13 @@ export async function updateProfile(req, res, next) {
       data: { user: user.toJSON() },
     });
   } catch (error) {
-    if (req.file) await removeAvatarFile(`/uploads/avatars/${req.file.filename}`);
+    if (uploadedAvatar?.publicId) {
+      try {
+        await deleteAvatarFromCloudinary(uploadedAvatar.publicId);
+      } catch (cleanupError) {
+        console.error("[cloudinary] Failed to clean up avatar:", cleanupError.message);
+      }
+    }
     next(error);
   }
 }
@@ -148,20 +162,17 @@ export async function removeAvatar(req, res, next) {
     const currentUser = await User.findById(req.user._id);
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { $set: { avatar: null } },
+      { $set: { avatar: null, avatarPublicId: null } },
       { new: true },
     );
 
-    if (currentUser?.avatar) await removeAvatarFile(currentUser.avatar);
+    if (currentUser?.avatarPublicId) {
+      await deleteAvatarFromCloudinary(currentUser.avatarPublicId);
+    }
     res.status(200).json({ success: true, data: { user: user.toJSON() } });
   } catch (error) {
     next(error);
   }
-}
-
-async function removeAvatarFile(avatarPath) {
-  const filename = path.basename(avatarPath);
-  await fs.rm(path.resolve("uploads", "avatars", filename), { force: true });
 }
 
 export async function changePassword(req, res, next) {
