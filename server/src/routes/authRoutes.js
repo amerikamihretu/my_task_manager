@@ -17,6 +17,8 @@ import {
   updateProfile,
   removeAvatar,
   changePassword,
+  startGoogleAuth,
+  finishGoogleAuth,
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -31,6 +33,8 @@ const authLimiter = rateLimit({
 
 router.post("/register", authLimiter, validate(registerSchema), register);
 router.post("/login", authLimiter, validate(loginSchema), login);
+router.get("/google", startGoogleAuth);
+router.get("/google/callback", finishGoogleAuth);
 router.post("/logout", requireAuth, logout);
 router.get("/me", requireAuth, me);
 router.patch(

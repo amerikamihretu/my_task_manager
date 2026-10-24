@@ -92,6 +92,8 @@ The available variables and safe placeholder values are documented in:
 `VITE_API_BASE_URL` is a public frontend configuration value, not a secret.
 Never put database credentials, JWT secrets, or private keys in variables
 starting with `VITE_`, because Vite bundles them into browser code.
+Google sign-in uses `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
+`GOOGLE_REDIRECT_URI`; keep the client secret only in the backend environment.
 
 ## Deployment
 
@@ -107,6 +109,22 @@ The deployed frontend communicates with the deployed backend through
 and uploads avatars to Cloudinary through the private `CLOUDINARY_URL`.
 Production secrets are configured in the hosting providers' environment
 settings and are never committed to Git.
+
+To enable Google sign-in, create a Web application OAuth client in Google
+Cloud Console. Add this authorized redirect URI:
+
+```text
+https://my-task-manager-nkw2.onrender.com/api/auth/google/callback
+```
+
+Set the resulting client ID, client secret, and the same redirect URI as
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in
+Render. Add the frontend origin to the OAuth client's authorized JavaScript
+origins:
+
+```text
+https://my-task-manager-beige.vercel.app
+```
 
 ## Avatar storage
 

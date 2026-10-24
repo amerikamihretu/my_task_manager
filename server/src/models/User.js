@@ -18,8 +18,12 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
       select: false, // never returned unless explicitly selected
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     avatar: {
       type: String,
@@ -39,6 +43,7 @@ const userSchema = new mongoose.Schema(
         delete ret._id;
         delete ret.__v;
         delete ret.password;
+        delete ret.avatarPublicId;
         return ret;
       },
     },

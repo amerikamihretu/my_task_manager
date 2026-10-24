@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
-import { CheckSquare, Eye, EyeOff, LogIn, ShieldCheck } from "lucide-react";
+import {
+  CheckSquare,
+  Eye,
+  EyeOff,
+  LogIn,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { googleAuthUrl } from "../services/api.js";
 
 export default function LoginPage() {
   const { user, login, loading } = useAuth();
@@ -11,6 +18,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const oauthError = new URLSearchParams(window.location.search).get(
+    "oauthError",
+  );
 
   if (!loading && user) return <Navigate to="/dashboard" replace />;
 
@@ -90,12 +100,12 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="card p-6 shadow-card-hover sm:p-8">
-          {error && (
+          {(error || oauthError) && (
             <div
               className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700"
               role="alert"
             >
-              {error}
+              {error || oauthError}
             </div>
           )}
 
@@ -147,6 +157,17 @@ export default function LoginPage() {
             <LogIn size={16} />
             {submitting ? "Signing in…" : "Sign in"}
           </button>
+          <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" />
+            OR
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <a
+            href={googleAuthUrl}
+            className="btn-secondary w-full"
+          >
+            Continue with Google
+          </a>
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-500">

@@ -9,6 +9,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { googleAuthUrl } from "../services/api.js";
 
 export default function RegisterPage() {
   const { user, register, loading } = useAuth();
@@ -193,6 +194,17 @@ export default function RegisterPage() {
             <UserPlus size={16} />
             {submitting ? "Creating account…" : "Create account"}
           </button>
+          <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" />
+            OR
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <a
+            href={googleAuthUrl}
+            className="btn-secondary w-full"
+          >
+            Continue with Google
+          </a>
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-500">

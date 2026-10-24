@@ -5,6 +5,10 @@ import {
   deleteAvatarFromCloudinary,
   uploadAvatarToCloudinary,
 } from "../config/cloudinary.js";
+import {
+  getGoogleAuthorizationUrl,
+  verifyGoogleCode,
+} from "../config/google.js";
 
 const SALT_ROUNDS = 10;
 
@@ -24,6 +28,59 @@ function signToken(userId) {
   });
 }
 
+function setSessionCookie(res, userId) {
+  res.cookie("token", signToken(userId), cookieOptions());
+}
+
+export function startGoogleAuth(_req, res, next) {
+  try {
+    const state = jwt.sign({ purpose: "google-oauth" }, process.env.JWT_SECRET, {
+      expiresIn: "10m",
+    });
+    res.redirect(getGoogleAuthorizationUrl(state));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function finishGoogleAuth(req, res) {
+  const frontend = process.env.CLIENT_ORIGIN;
+
+  try {
+    const state = jwt.verify(req.query.state, process.env.JWT_SECRET);
+    if (state.purpose !== "google-oauth") {
+      throw new Error("Invalid Google authentication state.");
+    }
+
+    const profile = await verifyGoogleCode(req.query.code);
+    let user = await User.findOne({ email: profile.email });
+
+    if (user) {
+      if (user.googleId && user.googleId !== profile.googleId) {
+        throw new Error("This email is linked to another Google account.");
+      }
+      user.googleId = profile.googleId;
+      if (!user.avatar && profile.avatar) user.avatar = profile.avatar;
+      await user.save();
+    } else {
+      user = await User.create({
+        name: profile.name,
+        email: profile.email,
+        googleId: profile.googleId,
+        avatar: profile.avatar,
+      });
+    }
+
+    setSessionCookie(res, user._id);
+    res.redirect(`${frontend}/dashboard`);
+  } catch (error) {
+    const message = encodeURIComponent(
+      error.message || "Google sign-in failed.",
+    );
+    res.redirect(`${frontend}/login?oauthError=${message}`);
+  }
+}
+
 export async function register(req, res, next) {
   try {
     const { name, email, password } = req.body;
@@ -39,8 +96,7 @@ export async function register(req, res, next) {
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
     const user = await User.create({ name, email, password: hash });
 
-    const token = signToken(user._id);
-    res.cookie("token", token, cookieOptions());
+    setSessionCookie(res, user._id);
 
     res.status(201).json({
       success: true,
@@ -63,7 +119,7 @@ export async function login(req, res, next) {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-    if (!user) {
+    if (!user || !user.password) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid email or password" });
@@ -76,8 +132,7 @@ export async function login(req, res, next) {
         .json({ success: false, message: "Invalid email or password" });
     }
 
-    const token = signToken(user._id);
-    res.cookie("token", token, cookieOptions());
+    setSessionCookie(res, user._id);
 
     res.status(200).json({
       success: true,

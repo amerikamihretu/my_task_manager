@@ -8,6 +8,8 @@ export function assetUrl(assetPath) {
   return assetPath ? new URL(assetPath, API_BASE).toString() : "";
 }
 
+export const googleAuthUrl = `${API_BASE}/auth/google`;
+
 async function request(path, options = {}) {
   const isFormData = options.body instanceof FormData;
   const res = await fetch(`${API_BASE}${path}`, {
