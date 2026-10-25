@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Plus, ListTodo, CalendarDays } from "lucide-react";
+import { Archive, Plus, ListTodo, CalendarDays, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../services/api.js";
 import Navbar from "../components/Navbar.jsx";
@@ -11,6 +11,7 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal.jsx";
 import CalendarView from "../components/CalendarView.jsx";
 import TaskDetailsDrawer from "../components/TaskDetailsDrawer.jsx";
 import AnalyticsView from "../components/AnalyticsView.jsx";
+import AiPlanner from "../components/AiPlanner.jsx";
 
 const defaultFilters = {
   search: "",
@@ -96,6 +97,7 @@ export default function DashboardPage() {
   const [deletingTask, setDeletingTask] = useState(null);
   const [detailsTask, setDetailsTask] = useState(null);
   const [toast, setToast] = useState(null);
+  const [aiPlannerOpen, setAiPlannerOpen] = useState(false);
 
   function showToast(message, tone = "success") {
     setToast({ message, tone });
@@ -246,6 +248,16 @@ export default function DashboardPage() {
       if (err.status === 401) await logout();
       throw err; // let the modal display it
     }
+  }
+
+  async function handleCreateAiTasks(plannedTasks) {
+    const created = await Promise.all(
+      plannedTasks.map((task) => api.post("/tasks", task)),
+    );
+    setTasks((prev) => [...created.map((res) => res.data.task), ...prev]);
+    showToast(
+      `${created.length} AI-planned task${created.length === 1 ? "" : "s"} created`,
+    );
   }
 
   async function handleToggle(task) {
@@ -434,8 +446,24 @@ export default function DashboardPage() {
               <Plus size={16} />
               Create task
             </button>
+            <button
+              type="button"
+              onClick={() => setAiPlannerOpen((open) => !open)}
+              className="btn-secondary w-full shrink-0 sm:w-auto"
+            >
+              <Sparkles size={16} />
+              Plan with AI
+            </button>
           </div>
         </div>
+
+        {aiPlannerOpen && (
+          <AiPlanner
+            tasks={tasks}
+            onCreateTasks={handleCreateAiTasks}
+            onClose={() => setAiPlannerOpen(false)}
+          />
+        )}
 
         {/* Filters */}
         <div className="mb-4">
